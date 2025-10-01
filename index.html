@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sentinel RRC Conveyor - Commissioning Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{margin:12px;max-width:1100px}
+h1{font-size:1.2rem;margin:0 0 12px}
+
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+label{font-size:.9rem;display:block}
+select{width:100%;padding:6px 8px;font-size:1rem}
+
+#runList{display:grid;gap:6px;margin:10px 0;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.run{padding:8px;border:1px solid #ddd;border-radius:8px}
+button{padding:10px 14px;font-size:1rem;border-radius:8px;border:1px solid #ccc;background:#f7f7f7}
+
+.cards{display:grid;gap:12px;grid-template-columns:1fr;}
+.card{border:1px solid #e3e3e3;border-radius:10px;padding:10px;position:relative;}
+.card h2{font-size:1rem;margin:0 0 8px;font-weight:600}
+.chart{height:460px}
+.controls{display:flex;gap:10px;align-items:center;margin:12px 0}
+.legendToggles{
+  position:absolute;
+  top:6px;
+  right:6px;
+  display:none;
+  gap:12px;
+  align-items:center;
+  font-size:.9rem;
+  background:rgba(255,255,255,.9);
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:4px 8px;
+  z-index:10;
+}
+</style>
+</head>
+<body>
+<h1>Sentinel RRC Conveyor - Commissioning Dashboard</h1>
+
+<div class="grid">
+  <div><label>Stopping Case</label><select id="stopCase"><option value="">— select —</option></select></div>
+  <div><label>Cart/Rope Friction</label><select id="crmus"><option value="">— select —</option></select></div>
+  <div><label>Turnaround Friction</label><select id="cmusLoop"><option value="">— select —</option></select></div>
+  <div><label>Spring Stiffness</label><select id="spring"><option value="">— select —</option></select></div>
+</div>
+
+<p style="margin:10px 0 6px"><strong>Matching simulations (tick to overlay):</strong></p>
+<div id="runList"></div>
+
+<div class="controls">
+  <label><input type="checkbox" id="selectAll"> Select All</label>
+  <select id="chartType">
+    <option value="DriveTail">Drive & Tail Velocity</option>
+    <option value="RelVel">Relative Velocity (Cart–Cable)</option>
+    <option value="Tension">System Cable Tensions</option>
+    <option value="Turnaround">Turnaround Cable Tensions</option>
+    <option value="Spring">Spring Behaviour</option>
+    <option value="CarriageFloat">Carriage Float (Steady State)</option>
+  </select>
+  <button id="plotBtn">Plot</button>
+</div>
+
+<div class="cards">
+  <div id="startCard" class="card">
+    <!-- Drive/Tail toggles -->
+    <div id="startLegendToggles" class="legendToggles">
+      <label><input type="checkbox" id="startShowDrive" checked> Drive</label>
+      <label><input type="checkbox" id="startShowTail"  checked> Tail</label>
+    </div>
+    <!-- Turnaround toggles -->
+    <div id="startTAToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="startShowHE" checked> Head Entry</label>
+      <label><input type="checkbox" id="startShowHX" checked> Head Exit</label>
+      <label><input type="checkbox" id="startShowTE" checked> Tail Entry</label>
+      <label><input type="checkbox" id="startShowTX" checked> Tail Exit</label>
+    </div>
+    <!-- RelVel toggles -->
+    <div id="startRVToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="startShowSteady_RV" checked> Steady State</label>
+      <label><input type="checkbox" id="startShowMax_RV"    checked> Max</label>
+      <label><input type="checkbox" id="startShowMin_RV"    checked> Min</label>
+    </div>
+    <!-- Tension toggles -->
+    <div id="startTenToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="startShowSteady_T" checked> Steady State</label>
+      <label><input type="checkbox" id="startShowMax_T"    checked> Max</label>
+      <label><input type="checkbox" id="startShowMin_T"    checked> Min</label>
+    </div>
+    <!-- Spring toggles -->
+    <div id="startSpringToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="startShowForce" checked> Force</label>
+      <label><input type="checkbox" id="startShowComp"  checked> Compression</label>
+    </div>
+
+    <div id="chartStart" class="chart"></div>
+  </div>
+
+  <div id="stopCard" class="card">
+    <!-- Drive/Tail toggles -->
+    <div id="stopLegendToggles" class="legendToggles">
+      <label><input type="checkbox" id="stopShowDrive" checked> Drive</label>
+      <label><input type="checkbox" id="stopShowTail"  checked> Tail</label>
+    </div>
+    <!-- Turnaround toggles -->
+    <div id="stopTAToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="stopShowHE" checked> Head Entry</label>
+      <label><input type="checkbox" id="stopShowHX" checked> Head Exit</label>
+      <label><input type="checkbox" id="stopShowTE" checked> Tail Entry</label>
+      <label><input type="checkbox" id="stopShowTX" checked> Tail Exit</label>
+    </div>
+    <!-- RelVel toggles -->
+    <div id="stopRVToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="stopShowSteady_RV" checked> Steady State</label>
+      <label><input type="checkbox" id="stopShowMax_RV"    checked> Max</label>
+      <label><input type="checkbox" id="stopShowMin_RV"    checked> Min</label>
+    </div>
+    <!-- Tension toggles -->
+    <div id="stopTenToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="stopShowSteady_T" checked> Steady State</label>
+      <label><input type="checkbox" id="stopShowMax_T"    checked> Max</label>
+      <label><input type="checkbox" id="stopShowMin_T"    checked> Min</label>
+    </div>
+    <!-- Spring toggles -->
+    <div id="stopSpringToggles" class="legendToggles" style="display:none">
+      <label><input type="checkbox" id="stopShowForce" checked> Force</label>
+      <label><input type="checkbox" id="stopShowComp"  checked> Compression</label>
+    </div>
+
+    <div id="chartStop" class="chart"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
